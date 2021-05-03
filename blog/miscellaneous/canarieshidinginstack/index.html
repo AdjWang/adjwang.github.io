@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <meta name="generator" content="Hugo 0.82.0-DEV" />
+  <link rel="canonical" href="https://adjwang.github.io/blog/miscellaneous/canarieshidinginstack/">
+
+  
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#000000">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+  <link rel="stylesheet" type="text/css" href="https://adjwang.github.io/css/paper.css">
+
+  
+  
+  <link rel="stylesheet" type="text/css" href="https://adjwang.github.io/css/custom.css">
+
+  
+  
+  <title>藏在栈里的金丝雀 | My New Hugo Site</title>
+</head>
+  <body>
+    <div class="container paper">
+      <nav class="border split-nav">
+  <div class="nav-brand">
+    <h3><a href="/">My New Hugo Site</a></h3>
+  </div>
+  <div class="collapsible">
+    <input id="collapsible1" type="checkbox" name="collapsible1">
+    <button>
+    <label for="collapsible1">
+        <div class="bar1"></div>
+        <div class="bar2"></div>
+        <div class="bar3"></div>
+      </label>
+    </button>
+    <div class="collapsible-body">
+      <ul class="inline">
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+      <main>
+        
+
+<h1>藏在栈里的金丝雀</h1>
+<h3 id="藏在栈里的金丝雀">藏在栈里的金丝雀</h3>
+<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<p>图片来源：https://www.wallpapersdsc.net/animals/canary-65879.html</p>
+<h2 id="canary">canary</h2>
+<p>首先介绍 &ldquo;canary&rdquo; 的概念，根据某简称为 CSAPP 的“史籍”记载，金丝雀可以察觉煤矿中的有毒气体，而后来某天编译器加入了一种缓冲区检测的机制，就命名为 &ldquo;canary&rdquo;。简单来说，就是在栈帧里加个随机值，函数返回前检查下这个值有没被改动，就知道栈还正不正常了。</p>
+<h2 id="事情的起源">事情的起源</h2>
+<p>最近做补丁用到 <code>__declspec(naked)</code> 声明的函数，我还想在里面用局部变量。因为 <code>__declspec(naked)</code> 声明的函数去掉了头尾的入栈出栈代码，所以我还专门手写了处理堆栈的代码。为了方便说明，这里举个简单的例子：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#66d9ef">__declspec</span>(<span style="color:#66d9ef">naked</span>) <span style="color:#66d9ef">int</span> <span style="color:#66d9ef">__cdecl</span> canariesTestNaked() {
+    <span style="color:#66d9ef">struct</span> {
+        <span style="color:#66d9ef">int</span> a;
+        <span style="color:#66d9ef">int</span> b;
+    } local_var;
+    <span style="color:#66d9ef">__asm</span> {
+        push ebp
+        mov ebp, esp
+        sub esp, <span style="color:#ae81ff">8</span>
+    }
+    local_var.a <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>;
+    local_var.b <span style="color:#f92672">=</span> <span style="color:#ae81ff">6</span>;
+    local_var.b <span style="color:#f92672">+=</span> local_var.a;
+    <span style="color:#66d9ef">__asm</span> {
+        mov eax, local_var.b
+        mov esp, ebp
+        pop ebp
+        retn
+    }
+}
+</code></pre></div><p>像这种函数，局部变量的大小应该非常明确，取用局部变量就是 <code>[ebp-4]</code> 和 <code>[ebp-8]</code>，按照非数组元素倒序排列的规则，它们分别取得 <code>local_var.b</code> 和 <code>local_var.a</code>，可是奇妙的事情发生了，它编译出来的汇编代码是这样的：</p>
+<pre><code class="language-x86asm" data-lang="x86asm"> push        ebp  
+ mov         ebp,esp  
+ sub         esp,8  
+ mov         dword ptr [ebp-0Ch],5  
+ mov         dword ptr [ebp-8],6  
+ mov         eax,dword ptr [ebp-8]  
+ add         eax,dword ptr [ebp-0Ch]  
+ mov         dword ptr [ebp-8],eax  
+ mov         eax,dword ptr [ebp-8]  
+ mov         esp,ebp  
+ pop         ebp  
+ ret  
+</code></pre><p>可以看到， <code>local_var.a</code> 对应 <code>[ebp-C]</code>，<code>local_var.b</code> 对应 <code>[ebp-8]</code>，那么，<code>[ebp-4]</code> 现在是啥？</p>
+<p>没错，就是 &ldquo;canary&rdquo; 。其实确切地说，控制编译器做这种事情的是 <code>/RTC</code> (Run-time error checks) 选项，而通常大家所说的 &ldquo;canary&rdquo; 是 /GS (Buffer Security Check) 选项添加的。对于这件事，<strong>我觉得应该把 &ldquo;canary&rdquo; 看成一种安全防范的思想，不要纠结教条的东西，所以我就在这里认为这东西是 &ldquo;canary&rdquo; 了。</strong></p>
+<p>当然，还有一些事得说清楚，**添加 &ldquo;canary&rdquo; 并不是 RTC 检查的唯一动作，更多细节可以参考 <a href="https://docs.microsoft.com/en-us/cpp/build/reference/rtc-run-time-error-checks?view=msvc-160">MSDN文档</a> 。**另外，RTC 检查是 Debug 模式的默认选项，而在 Release 模式下关闭，而 GS 在两种模式下都会默认开启，这也就解释了某些代码注入程序只能在 Release 模式下跑通的现象。然而，凡事都有例外，我也发现会有一些代码，尽管我没有声明数组，在 Release 模式下仍然会受到类似 RTC 这种保护的影响，这时就要考虑去关闭 GS 选项试试。当然，trade-off 就是引入了更大的安全风险。</p>
+<h2 id="验证">验证</h2>
+<p>首先，在 <code>__declspec(naked)</code> 声明下，&ldquo;canary&rdquo; 完全没用，手动修改 <code>[ebp-4]</code> 的值，然后运行：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#66d9ef">__declspec</span>(<span style="color:#66d9ef">naked</span>) <span style="color:#66d9ef">int</span> <span style="color:#66d9ef">__cdecl</span> canariesTestNaked() {
+    <span style="color:#66d9ef">struct</span> {
+        <span style="color:#66d9ef">int</span> a;
+        <span style="color:#66d9ef">int</span> b;
+    } local_var;
+    <span style="color:#66d9ef">__asm</span> {
+        push ebp
+        mov ebp, esp
+        sub esp, <span style="color:#ae81ff">0</span>Ch
+        mov dword ptr [ebp<span style="color:#f92672">-</span><span style="color:#ae81ff">4</span>], <span style="color:#ae81ff">12345678</span>h	<span style="color:#75715e">// modify canary manually
+</span><span style="color:#75715e"></span>    }
+    local_var.a <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>;
+    local_var.b <span style="color:#f92672">=</span> <span style="color:#ae81ff">6</span>;
+    local_var.b <span style="color:#f92672">+=</span> local_var.a;
+    <span style="color:#66d9ef">__asm</span> {
+        mov eax, local_var.b
+        mov esp, ebp
+        pop ebp
+        retn
+    }
+}
+</code></pre></div><p>没有任何错误信息，程序顺利跑通。然后，去除 <code>__declspec(naked)</code> 选项，因为编译器会自动处理栈，我就把手动入栈出栈的代码去掉了，此时汇编代码可以说是面目全非，所以我就截取其中的一段。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#66d9ef">int</span> <span style="color:#66d9ef">__cdecl</span> <span style="color:#a6e22e">canariesTest</span>() {
+    <span style="color:#66d9ef">struct</span> {
+        <span style="color:#66d9ef">int</span> a;
+        <span style="color:#66d9ef">int</span> b;
+    } local_var;
+    <span style="color:#66d9ef">__asm</span> mov dword ptr [ebp<span style="color:#f92672">-</span><span style="color:#ae81ff">4</span>], <span style="color:#ae81ff">12345678</span>h
+    local_var.a <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>;
+    local_var.b <span style="color:#f92672">=</span> <span style="color:#ae81ff">6</span>;
+    local_var.b <span style="color:#f92672">+=</span> local_var.a;
+    <span style="color:#66d9ef">return</span> local_var.b;
+}
+
+...
+ mov         dword ptr [ebp<span style="color:#f92672">-</span><span style="color:#ae81ff">4</span>],<span style="color:#ae81ff">12345678</span>h  
+ mov         dword ptr [ebp<span style="color:#f92672">-</span><span style="color:#ae81ff">0</span>Ch],<span style="color:#ae81ff">5</span>  
+ mov         dword ptr [ebp<span style="color:#f92672">-</span><span style="color:#ae81ff">8</span>],<span style="color:#ae81ff">6</span>  
+ mov         eax,dword ptr [ebp<span style="color:#f92672">-</span><span style="color:#ae81ff">8</span>]  
+ add         eax,dword ptr [ebp<span style="color:#f92672">-</span><span style="color:#ae81ff">0</span>Ch]  
+ mov         dword ptr [ebp<span style="color:#f92672">-</span><span style="color:#ae81ff">8</span>],eax  
+ mov         eax,dword ptr [ebp<span style="color:#f92672">-</span><span style="color:#ae81ff">8</span>]  
+...
+</code></pre></div><p>然后，程序在返回时报错: Run-Time Check Failure #2 - Stack around the variable &lsquo;local_var&rsquo; was corrupted.</p>
+<h2 id="gs-选项的保护">GS 选项的保护</h2>
+<p>说完了 RTC 中的栈保护，再来看下 GS 的栈保护。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">canariesTest</span>() {
+    <span style="color:#66d9ef">char</span> str[<span style="color:#ae81ff">3</span>];
+    std<span style="color:#f92672">::</span>cin <span style="color:#f92672">&gt;&gt;</span> str;
+    std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> str <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+}
+</code></pre></div><p>使用上面这段代码，输入字符数量超过缓冲区长度时，就会发生缓冲区溢出现象。因为输入信息是动态获取的，所以 IDE 的静态分析不会给出提示。</p>
+<ul>
+<li>输入字符串长度大于等于 4 时，程序报错: Unhandled exception at 0x005F1DBB in test.exe: Stack cookie instrumentation code detected a stack-based buffer overrun.</li>
+<li>手动关闭 GS 检查，程序报错: Exception thrown at 0x66636164 in test.exe: 0xC0000005: Access violation executing location 0x66636164.</li>
+</ul>
+<p>由此可见，Stack cookie instrumentation code 其实就是 GS 选项添加的保护机制，这种防护手段确实起了作用。</p>
+<p>此外，输入 3 个字符并没有报错，虽然已经溢出了 1 个字符。</p>
+<h1 id="在-naked-函数中使用-局部变量-的最佳实践">在 naked 函数中使用 &ldquo;局部变量&rdquo; 的最佳实践</h1>
+<p>我给局部变量加了引号，是因为这些变量实际上要放到全局区——没错，就是给原来所有的局部变量添加 <code>static</code> 关键字，既不破坏命名空间，又能满足局部变量的功能需求。当然，这么做的副作用就是线程不安全，另外，会多占用一点内存空间。代码简化成下面这样：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-C++" data-lang="C++"><span style="color:#66d9ef">__declspec</span>(<span style="color:#66d9ef">naked</span>) <span style="color:#66d9ef">int</span> <span style="color:#66d9ef">__cdecl</span> canariesTestNaked() {
+    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">struct</span> {
+        <span style="color:#66d9ef">int</span> a;
+        <span style="color:#66d9ef">int</span> b;
+    } local_var;
+    local_var.a <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>;
+    local_var.b <span style="color:#f92672">=</span> <span style="color:#ae81ff">6</span>;
+    local_var.b <span style="color:#f92672">+=</span> local_var.a;
+    <span style="color:#66d9ef">__asm</span> {
+        mov eax, local_var.b
+        retn
+    }
+}
+</code></pre></div><h1 id="参考资料">参考资料</h1>
+<ul>
+<li><a href="https://www.informit.com/articles/article.aspx?p=2036582&amp;seqNum=6">https://www.informit.com/articles/article.aspx?p=2036582&amp;seqNum=6</a> （好文请务必多看！）</li>
+<li><a href="https://docs.microsoft.com/en-us/cpp/build/reference/rtc-run-time-error-checks?view=msvc-160">https://docs.microsoft.com/en-us/cpp/build/reference/rtc-run-time-error-checks?view=msvc-160</a></li>
+<li><a href="https://docs.microsoft.com/en-us/cpp/build/reference/gs-buffer-security-check?view=msvc-160">https://docs.microsoft.com/en-us/cpp/build/reference/gs-buffer-security-check?view=msvc-160</a></li>
+</ul>
+
+  
+
+      </main>
+      
+  
+
+  </div>
+  </body>
+</html>

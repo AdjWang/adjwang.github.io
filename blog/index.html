@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <meta name="generator" content="Hugo 0.82.0-DEV" />
+  <link rel="canonical" href="https://adjwang.github.io/blog/">
+
+  
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#000000">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+
+  <link rel="stylesheet" type="text/css" href="https://adjwang.github.io/css/paper.css">
+
+  
+  
+  <link rel="stylesheet" type="text/css" href="https://adjwang.github.io/css/custom.css">
+
+  
+  
+  <title>Blogs | My New Hugo Site</title>
+</head>
+  <body>
+    <div class="container paper">
+      <nav class="border split-nav">
+  <div class="nav-brand">
+    <h3><a href="/">My New Hugo Site</a></h3>
+  </div>
+  <div class="collapsible">
+    <input id="collapsible1" type="checkbox" name="collapsible1">
+    <button>
+    <label for="collapsible1">
+        <div class="bar1"></div>
+        <div class="bar2"></div>
+        <div class="bar3"></div>
+      </label>
+    </button>
+    <div class="collapsible-body">
+      <ul class="inline">
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+      <main>
+        
+
+<h1>Blogs</h1>
+
+
+
+  <h2 class="post-list summary">
+    <a href="https://adjwang.github.io/blog/miscellaneous/canarieshidinginstack/">
+      藏在栈里的金丝雀
+    </a>
+  </h2>
+  
+    藏在栈里的金丝雀 图片来源：https://www.wallpapersdsc.net/animals/canary-65879.html
+canary 首先介绍 &ldquo;canary&rdquo; 的概念，根据某简称为 CSAPP 的“史籍”记载，金丝雀可以察觉煤矿中的有毒气体，而后来某天编译器加入了一种缓冲区检测的机制，就命名为 &ldquo;canary&rdquo;。简单来说，就是在栈帧里加个随机值，函数返回前检查下这个值有没被改动，就知道栈还正不正常了。
+事情的起源 最近做补丁用到 __declspec(naked) 声明的函数，我还想在里面用局部变量。因为 __declspec(naked) 声明的函数去掉了头尾的入栈出栈代码，所以我还专门手写了处理堆栈的代码。为了方便说明，这里举个简单的例子：
+__declspec(naked) int __cdecl canariesTestNaked() { struct { int a; int b; } local_var; __asm { push ebp mov ebp, esp sub esp, 8 } local_var.a = 5; local_var.b = 6; local_var.b += local_var.a; __asm { mov eax, local_var.b mov esp, ebp pop ebp retn } } 像这种函数，局部变量的大小应该非常明确，取用局部变量就是 [ebp-4] 和 [ebp-8]，按照非数组元素倒序排列的规则，它们分别取得 local_var.b 和 local_var.a，可是奇妙的事情发生了，它编译出来的汇编代码是这样的：
+push ebp mov ebp,esp sub esp,8 mov dword ptr [ebp-0Ch],5 mov dword ptr [ebp-8],6 mov eax,dword ptr [ebp-8] add eax,dword ptr [ebp-0Ch] mov dword ptr [ebp-8],eax mov eax,dword ptr [ebp-8] mov esp,ebp pop ebp ret 可以看到， local_var.
+  
+
+
+      </main>
+      
+  
+
+  </div>
+  </body>
+</html>
