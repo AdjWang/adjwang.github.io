@@ -2,9 +2,13 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Categories on 竹林七咸</title>
-    <link>https://adjwang.github.io/categories/</link>
+    <link>http://47.96.165.13/categories/</link>
     <description>Recent content in Categories on 竹林七咸</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language><atom:link href="https://adjwang.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
+    <language>en-us</language>
+    
+	<atom:link href="http://47.96.165.13/categories/index.xml" rel="self" type="application/rss+xml" />
+    
+    
   </channel>
 </rss>

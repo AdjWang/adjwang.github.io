@@ -1,24 +1,43 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
   <url>
-    <loc>https://adjwang.github.io/posts/</loc>
-    <lastmod>2021-04-25T22:29:50+08:00</lastmod>
-  </url><url>
-    <loc>https://adjwang.github.io/</loc>
-    <lastmod>2021-04-25T22:29:50+08:00</lastmod>
-  </url><url>
-    <loc>https://adjwang.github.io/posts/miscellaneous/canarieshidinginstack/</loc>
-    <lastmod>2021-04-25T22:29:50+08:00</lastmod>
-  </url><url>
-    <loc>https://adjwang.github.io/posts/python/dict/</loc>
-    <lastmod>2021-02-27T18:05:51+08:00</lastmod>
-  </url><url>
-    <loc>https://adjwang.github.io/posts/python/pythonnest/</loc>
-    <lastmod>2021-01-12T18:07:34+08:00</lastmod>
-  </url><url>
-    <loc>https://adjwang.github.io/categories/</loc>
-  </url><url>
-    <loc>https://adjwang.github.io/tags/</loc>
+    <loc>http://47.96.165.13/posts/algorithms/implement-raft/</loc>
+    <lastmod>2022-01-31T00:25:34+08:00</lastmod>
   </url>
+  
+  <url>
+    <loc>http://47.96.165.13/posts/</loc>
+    <lastmod>2022-01-31T00:25:34+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://47.96.165.13/</loc>
+    <lastmod>2022-01-31T00:25:34+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://47.96.165.13/posts/miscellaneous/canarieshidinginstack/</loc>
+    <lastmod>2021-04-25T22:29:50+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://47.96.165.13/posts/python/dict/</loc>
+    <lastmod>2021-02-27T18:05:51+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://47.96.165.13/posts/python/pythonnest/</loc>
+    <lastmod>2021-01-12T18:07:34+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://47.96.165.13/categories/</loc>
+  </url>
+  
+  <url>
+    <loc>http://47.96.165.13/tags/</loc>
+  </url>
+  
 </urlset>

@@ -1,0 +1,361 @@
+
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+
+  
+  <meta charset="UTF-8">
+  <title>
+    Implement Raft | 竹林七咸
+  </title>
+
+  
+  <link rel="icon" href="/images/profile.jpg" type="image/icon type">
+
+  
+  <meta name="viewport" content="width=device-width,user-scalable=no,maximum-scale=1,initial-scale=1">
+
+  
+  <link rel="canonical" href="http://47.96.165.13/posts/algorithms/implement-raft/"/>
+
+  
+  <link rel="stylesheet" href="/css/sanitize.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <link rel="stylesheet" href="/css/highlight_monokai.css">
+  <link rel="stylesheet" href="/css/theme.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  
+  
+  <link href="http://47.96.165.13/index.xml" rel="alternate" type="application/rss+xml" title="竹林七咸" />
+  <link href="http://47.96.165.13/index.xml" rel="feed" type="application/rss+xml" title="竹林七咸" />
+
+  
+  
+    <script type="text/javascript">var switchTo5x=true;</script>
+    <script type="text/javascript" src="https://ws.sharethis.com/button/buttons.js"></script>
+    <script type="text/javascript">stLight.options({publisher: 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX', doNotHash: true, doNotCopy: true, hashAddressBar: false});</script>
+  
+
+
+</head>
+
+
+
+<body>
+<div class="container">
+
+  
+  <header role="banner">
+    <div class="row gutters">
+      <div id="site-title" class="col span_6">
+        <h1><a href="http://47.96.165.13/">竹林七咸</a></h1>
+        <h2>吾乃咸鱼一条，竹林七咸之一。</h2>
+      </div>
+      <div id="social" class="col span_6">
+        <ul>
+          
+          
+          <li><a href="https://github.com/AdjWang" target="_blank">GitHub</a></li>
+          <li><a href="http://47.96.165.13/index.xml" type="application/rss+xml" target="_blank">RSS</a></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+
+  
+  <main id="single" role="main">
+    <div class="article-header">
+      <h1>Implement Raft</h1>
+      <div class="meta">
+        2022-01-31 &nbsp;
+        
+      </div>
+    </div>
+    <article>
+      <h3 id="scenarios">Scenarios</h3>
+<p>The character of nodes in raft can be <em>leader</em>, <em>candidate</em> and <em>follower</em>, and RPC calls send by candidate and leader are RequestVote and AppendEntries(and InstallSnapshot) respectively. Due to network partition and delay, any node at any character can receives any rpc request call, so I think the best way to avoid bugs is to list all of the scenarios. Here we go:</p>
+<table>
+<thead>
+<tr>
+<th>character \ RPC call received</th>
+<th>RequestVote (send by candidate)</th>
+<th>AppendEntries (send by leader)</th>
+<th>InstallSnapshot (send by leader)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>leader</td>
+<td>if request term ? current term<br />&gt; : a follower timeout and transitions to candidate, maybe due to network partition or network delay of AppendEntries<br />  action:<br />    1. transition to follower<br />    2. check if the candidate&rsquo;s log is up to date<br />    3. if up to date, grant; otherwise reject.<br />&lt;= : expired RequestVote<br />  action: <br />    reject and send back <em>current term</em></td>
+<td>if request term ? current term<br />&gt; : a new leader has been elected maybe due to network partition or network delay<br />  action: <br />    1. transition to follower<br />    2. return false and send back <em>current term</em><br />= : impossible scenario due to $5.2 of paper<br />&lt; : expired rpc call<br />  action: <br />    1. return false and send back <em>current term</em></td>
+<td>if request term ? current term<br />&gt; : a new leader has been elected maybe due to network partition or network delay<br /> action: <br /> 1. transition to follower<br /> 2. install snapshot<br />3. return <em>current term</em><br />= : impossible scenario due to $5.2 of paper<br />&lt; : expired rpc call<br /> action: <br /> 1. return <em>current term</em></td>
+</tr>
+<tr>
+<td>candidate</td>
+<td>(same as leader)</td>
+<td>if request term ? current term<br />&gt;= : maybe restart and connect back to the majority partition<br />  action: <br />    1. transition to follower<br />    2. return false and send back <em>current term</em><br />&lt; : expired rpc call<br />  action: <br />    1. return false and send back <em>current term</em></td>
+<td>if request term ? current term<br />&gt;= : maybe restart and connect back to the majority partition<br /> action: <br /> 1. transition to follower<br /> 2. install snapshot<br />3. return <em>current term</em><br />&lt; : expired rpc call<br /> action: <br /> 1. return <em>current term</em><br /></td>
+</tr>
+<tr>
+<td>follower</td>
+<td>if request term ? current term<br />&gt; : a follower timeout and transitions to candidate, maybe network partition or network delay of AppendEntries<br />  action:<br />    1. check if the candidate&rsquo;s log is up to date<br />    2. if up to date, grant and reset election timer; otherwise reject.<br />&lt;= : expired RequestVote<br />  action: <br />    reject and send back <em>current term</em></td>
+<td>if request term ? current term<br />&gt; : maybe restart and connect back to the majority partition<br />  action: <br />1. reset election timer<br />2. sync with leader<br />3. return true if sync ok otherwise false and send back <em>current term</em><br />= : (normal)<br />  action: <br />    (same as &gt;)<br />&lt; : expired rpc call<br />  action: <br />    1. return false and send back <em>current term</em></td>
+<td>if request term ? current term<br />&gt; : maybe restart and connect back to the majority partition<br /> action: <br />1. reset election timer<br />2. install snapshot<br />3. return <em>current term</em><br />= : (normal)<br /> action: <br /> (same as &gt;)<br />&lt; : expired rpc call<br /> action: <br /> 1. return <em>current term</em><br /></td>
+</tr>
+</tbody>
+</table>
+<h3 id="confusions">Confusions</h3>
+<ol>
+<li>
+<p>what if there are 2 candidates request for vote simultaneously?</p>
+<p>According to $5.1 of paper, the leader election only do ONCE per term, if 2 candidates request for vote simultaneously, all requests will fail and wait for next election.</p>
+</li>
+<li>
+<p>what will happen when a partitioned orphan candidate connects back to the majority partition?</p>
+<p>A candidate increases its <em>current term</em> when starting to elect. So if the candidate is in a network partition and can&rsquo;t get votes from the majority of votes to be leader, it&rsquo;s <em>current term</em> will continually increase until it connects back to the majority partition. At the time the candidate connects back, its <em>current term</em> may be far more larger than any other nodes, while its log is still out of date, so the candidate cannot be elected as a leader.</p>
+<p>At the same time, we know that if any node receives a rpc request or reply with <em>term</em> larger than <em>current term</em> , it should turn itself to follower and set <em>current term</em> to be equal to the received larger <em>term</em>.</p>
+<ul>
+<li>the candidate&rsquo;s RequestVote with a larger <em>term</em> will be received by other nodes, causing other nodes update their <em>current term</em> and turn themself to follower. (now there&rsquo;s no leader in the cluster)</li>
+<li>because the candidate&rsquo;s log is out of date, none of it&rsquo;s RequestVote should be granted, the candidate remains its character as candidate and do the election again until election timeout. (but its election will fails again due to expired log)</li>
+<li>the follower whose log is up to date transitions to candidate when its election timer timeout. (Only this one can be elected as leader successfully, any other follower fails to be elected if its log is out of date)</li>
+<li>the new candidate now has a larger term than the one connected back, so the candidate connected back receives a RequestVote with <em>term</em> larger than <em>current term</em>, it turn itself to follower. (now the world come back to peace)</li>
+</ul>
+</li>
+<li>
+<p>what if client write to leader and read from a follower before it catch up commit index to the leader?</p>
+<p>(not sure, maybe only read from leader?)</p>
+</li>
+<li>
+<p>if a leader blocked and connects back after a new leader being elected, there will be 2 leaders in the cluster.</p>
+<p>The leader with lower term will transition to follower when it receives an AppendEntries from the new leader with higher term. So technically, <strong>there can be multiple leaders in the cluster, but there can only be one leader of the same term</strong>.</p>
+</li>
+</ol>
+<h3 id="note">Note</h3>
+<ul>
+<li><a href="https://thesquareplanet.com/blog/students-guide-to-raft/">Students&rsquo; Guide to Raft :: Jon Gjengset</a> provided on <a href="https://pdos.csail.mit.edu/6.824/labs/lab-raft.html">6.824 Lab 2: Raft</a> has an advice inconsitent with the <a href="https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf">paper</a> . The guide tells that you should initialize matchIndex to -1, while the paper and the test cases show that it should be initialized to 0 . <a href="https://pdos.csail.mit.edu/6.824/labs/lab-raft.html">6.824 Lab 2: Raft</a> also noted that the student&rsquo;s guide is old and keep your eyes open before following any advice.</li>
+</ul>
+<h3 id="summary">Summary</h3>
+<ul>
+<li>
+<p>DO NOT make assumptions on the order or the time an asynchronous function being invoked or a lock being acquired. Even if you are testing your code in LAN.</p>
+<p>When I wrote the first version of my bug &ndash; send AppendEntries request, it was like this:</p>
+<pre><code class="language-go">reqAppendEntries := func(rf *Raft, handler func(from int, reply *AppendEntriesReply)) {
+    for i := range rf.peers {
+        if i == rf.me {
+            continue
+        }
+        go func(serverIdx int, rf *Raft) {
+            rf.mu.Lock()
+            args := &amp;AppendEntriesArgs{
+                Term:         rf.currentTerm,
+                LeaderId:     rf.me,
+                PrevLogIndex: rf.nextIndex[serverIdx] - 1,
+                PrevLogTerm:  rf.log[rf.nextIndex[serverIdx]-1].Term,
+                Entries:      rf.log[rf.nextIndex[serverIdx]:],
+                LeaderCommit: rf.commitIndex,
+            }
+            log.Printf(LogPrefix(rf)+&quot;append entries send: %v to: %v, nextIndex: %v\n&quot;, args, serverIdx, rf.nextIndex)
+            rf.mu.Unlock()
+            reply := &amp;AppendEntriesReply{}
+            if rf.sendAppendEntries(serverIdx, args, reply) {
+                handler(serverIdx, reply)
+            }
+        }(i, rf)
+    }
+}
+for !rf.killed() {
+    // Your code here to check if a leader election should
+    // be started and to randomize sleeping time using
+    // time.Sleep().
+    &lt;-rf.electionTimer.C
+    if rf.killed() {
+        break
+    }
+  
+    rf.mu.Lock()
+    switch rf.character {
+    case LEADER:
+        ...
+        reqAppendEntries(rf, func(from int, reply *AppendEntriesReply) {
+            rf.mu.Lock()
+            defer rf.mu.Unlock()
+            ...
+            // turn to FOLLOWER if my term is lower than others and return
+            // commit entries if the majority of nodes replied my request
+        }
+    ...
+    }
+    rf.mu.Unlock()
+    ...
+}
+</code></pre>
+<p>I was aiming to call reqAppendEntries periodically to send asynchronous AppendEntries request to  other nodes, and handle reply in a callback function. Then I got a multi-leaders error randomly:</p>
+<p><code>2022/01/29 18:40:21 raft.go:530: impossible scenario: multiple leaders in the same term: me: 0, other: 3</code></p>
+<p>Where the bug is? After struggled a while in the log, I figured out that the problem is <strong>I assumed that all go functions inside reqAppendEntries() can be invoked before any response returns</strong>, while <strong>actually some of them was scheduled to be invoked after another, also after previous responses having been handled by callback functions</strong>.</p>
+<p>Let&rsquo;s make an example:</p>
+<ol>
+<li>
+<p>put go func1 and go func2 in schedule but not invoked</p>
+</li>
+<li>
+<p>go func1 invoked but go func2 not</p>
+<p>go func1 send args as a LEADER with term T1</p>
+</li>
+<li>
+<p>handler inside go func1 invoked and find out the currentTerm is lower than reply.Term, then transfer to FOLLOWER and set term to T2(reply.Term), where T2 &gt; T1</p>
+</li>
+<li>
+<p>go func2 from the previous LEADER case eventually invoked now, send args with term T2 and believes it is a LEADER</p>
+</li>
+<li>
+<p>other peers receives AppendEntries request both from the real LEADER and the fake LEADER with same term</p>
+</li>
+</ol>
+<p>So the key is to ensure the args passed to sendAppendEntries() holds the states before any callback handler being invoked. I fixed it by making args outside the go func like this:</p>
+<pre><code class="language-go">reqAppendEntries := func(rf *Raft, handler func(from int, reply *AppendEntriesReply)) {
+    for serverIdx := range rf.peers {
+        if serverIdx == rf.me {
+            continue
+        }
+        args := &amp;AppendEntriesArgs{
+            Term:         rf.currentTerm,
+            LeaderId:     rf.me,
+            PrevLogIndex: rf.nextIndex[serverIdx] - 1,
+            PrevLogTerm:  rf.log[rf.nextIndex[serverIdx]-1].Term,
+            Entries:      rf.log[rf.nextIndex[serverIdx]:],
+            LeaderCommit: rf.commitIndex,
+        }
+        log.Printf(LogPrefix(rf)+&quot;append entries send: %v to: %v, nextIndex: %v\n&quot;, args, serverIdx, rf.nextIndex)
+        go func(serverIdx int, args *AppendEntriesArgs) {
+            reply := &amp;AppendEntriesReply{}
+            if rf.sendAppendEntries(serverIdx, args, reply) {
+                handler(serverIdx, reply)
+            }
+        }(serverIdx, args)
+    }
+}
+</code></pre>
+</li>
+<li>
+<p>Don&rsquo;t forget to use ctrl+\ to solve deadlock issue. When I was implementing the InstallSnapshot, I encountered a deadlock problem after I add a lock in Snapshot(). The deadlock cycle is:</p>
+<ol>
+<li>
+<p>raft.go, ApplyEntries handler: Acquired rf.mu.Lock() in ApplyEntries handler and wait to push ApplyMsg to applyCh when updating commit index. Only after cfg.applierSnap() consumes an entry could carry on here.</p>
+</li>
+<li>
+<p>config.go, cfg.applierSnap(): consume applyCh only after cfg.rafts[i].Snapshot(m.CommandIndex, w.Bytes()) returned.</p>
+</li>
+<li>
+<p>raft.go, Snapshot(): Require and block at rf.mu.Lock() because the lock is being holded by ApplyEntries handler.</p>
+</li>
+</ol>
+<p>Ops, the earth stops rotating now. I can only edit the raft.go due to the game rule and can&rsquo;t remove the lock in Snapshot() or a race condition will occur. So I solved this by adding a breath room to the applyCh:</p>
+<pre><code class="language-go">func Make(peers []*labrpc.ClientEnd, me int,
+    persister *Persister, applyCh chan ApplyMsg) *Raft {
+    ...
+    applyBuffer := make(chan ApplyMsg, 10)
+    rf.applyCh = applyBuffer
+    go func() {
+        for {
+            msg := &lt;-applyBuffer
+            applyCh &lt;- msg
+        }
+    }()
+    ...
+}
+</code></pre>
+<p>It&rsquo;s ugly but I can&rsquo;t come up with a better idea for now. If you have, please tell me.</p>
+</li>
+</ul>
+<h3 id="references">References</h3>
+<ul>
+<li>
+<p><a href="https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf">extended Raft paper</a></p>
+</li>
+<li>
+<p><a href="https://pdos.csail.mit.edu/6.824/labs/lab-raft.html">6.824 Lab 2: Raft</a></p>
+</li>
+<li>
+<p><a href="https://thesquareplanet.com/blog/students-guide-to-raft/">Students&rsquo; Guide to Raft :: Jon Gjengset</a></p>
+</li>
+</ul>
+
+      
+      
+      
+        <div id="share-this" class="col span_10">
+          <span class='st_twitter_large' displayText='Tweet'></span>
+          <span class='st_facebook_large' displayText='Facebook'></span>
+          <span class='st_googleplus_large' displayText='Google +'></span>
+          <span class='st_pocket_large' displayText='Pocket'></span>
+          <span class='st_sharethis_large' displayText='ShareThis'></span>
+          <span class='st_email_large' displayText='Email'></span>  
+        </div>
+      
+    </article>
+    
+ <aside><div id="disqus_thread"></div></aside>
+
+<script type="text/javascript">
+     
+    var disqus_shortname = 'AdjWang';
+
+     
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+
+
+  </main>
+  
+  <nav class="pagination-single">
+    
+    
+      <span class="next"><a href="http://47.96.165.13/posts/miscellaneous/canarieshidinginstack/" rel="next">藏在栈里的金丝雀</a> &rarr;</span>
+    
+  </nav>
+
+  
+  
+  <script src="https://utteranc.es/client.js"
+          repo="AdjWang/adjwang.github.io"
+          issue-term="pathname"
+          theme="github-light"
+          crossorigin="anonymous"
+          async>
+  </script>
+  
+
+
+  
+  <footer role="contentinfo">
+    <div style="text-align:center;">
+      <img src="/images/profile.jpg" width="64" height="64"><br>
+      Written by AdjWang
+    </div>
+  </footer>
+
+
+</div>
+
+<script src="/js/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+<script>
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-XXXXXXXX-X', 'auto');
+	ga('send', 'pageview');
+</script>
+
+</body>
+</html>
+

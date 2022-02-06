@@ -16,7 +16,7 @@
   <meta name="viewport" content="width=device-width,user-scalable=no,maximum-scale=1,initial-scale=1">
 
   
-  <link rel="canonical" href="https://adjwang.github.io/posts/python/dict/"/>
+  <link rel="canonical" href="http://47.96.165.13/posts/python/dict/"/>
 
   
   <link rel="stylesheet" href="/css/sanitize.css">
@@ -26,8 +26,8 @@
   <link rel="stylesheet" href="/css/custom.css">
   
   
-  <link href="https://adjwang.github.io/index.xml" rel="alternate" type="application/rss+xml" title="竹林七咸" />
-  <link href="https://adjwang.github.io/index.xml" rel="feed" type="application/rss+xml" title="竹林七咸" />
+  <link href="http://47.96.165.13/index.xml" rel="alternate" type="application/rss+xml" title="竹林七咸" />
+  <link href="http://47.96.165.13/index.xml" rel="feed" type="application/rss+xml" title="竹林七咸" />
 
   
   
@@ -48,7 +48,7 @@
   <header role="banner">
     <div class="row gutters">
       <div id="site-title" class="col span_6">
-        <h1><a href="https://adjwang.github.io/">竹林七咸</a></h1>
+        <h1><a href="http://47.96.165.13/">竹林七咸</a></h1>
         <h2>吾乃咸鱼一条，竹林七咸之一。</h2>
       </div>
       <div id="social" class="col span_6">
@@ -56,7 +56,7 @@
           
           
           <li><a href="https://github.com/AdjWang" target="_blank">GitHub</a></li>
-          <li><a href="https://adjwang.github.io/index.xml" type="application/rss+xml" target="_blank">RSS</a></li>
+          <li><a href="http://47.96.165.13/index.xml" type="application/rss+xml" target="_blank">RSS</a></li>
         </ul>
       </div>
     </div>
@@ -109,7 +109,7 @@
 <li>
 <p><code>PyObject_HEAD</code></p>
 <p>Python里所有东西都是对象，而且这些对象都是无类型的，那么想想这两个问题：在C语言里，类型是固定的，而且没有运行时类型检查，那么怎么样实现动态调用呢？动态调用以后怎么识别类型呢？</p>
-<p>没错，就是&quot;看脸&quot;，假如每个对象都有一个这样的<code>PyObject_HEAD</code>，其中包含类型信息，那么就可以用指针动态调用，然后根据其中的类型信息动态识别类型了。<del>打个比方，假如你的对象很多很多，TA们的身高体重长相各自都是固定的，你今天约这个，明天约那个，“类型”变了怎么办？不碍事呀，用手机“动态调用”，听声音或者见面“识别类型”，一个道理嘛，哈哈哈哈哈哈哈……</del></p>
+<p>没错，就是&quot;看脸&rdquo;，假如每个对象都有一个这样的<code>PyObject_HEAD</code>，其中包含类型信息，那么就可以用指针动态调用，然后根据其中的类型信息动态识别类型了。<del>打个比方，假如你的对象很多很多，TA们的身高体重长相各自都是固定的，你今天约这个，明天约那个，“类型”变了怎么办？不碍事呀，用手机“动态调用”，听声音或者见面“识别类型”，一个道理嘛，哈哈哈哈哈哈哈……</del></p>
 <p>再多说一句，一定要做好“类型检查”，<del>如果让你的对象发现你心里想的是别人，那就翻车了！这时候程序就出错崩溃了！</del></p>
 </li>
 <li>
@@ -186,7 +186,7 @@ i = (size_t)hash &amp; mask;	// 通过哈希值计算哈希表索引
 <li>
 <p><span id="ma_values"><code>PyObject **ma_values</code></span></p>
 <p>Python 3.3 引入了新的字典实现方式: <code>splitted dict</code>，这是一个针对类属性实现的结构，想象这样的应用场景：一个类，定义好以后属性名字不变(假设不动态更改)，它有很多不同的实例，这些实例属性值不同，但是属性名字相同，如果这些<code>__dict__</code>共用一套<code>key</code>，可以节约内存。参考 <a href="https://www.python.org/dev/peps/pep-0412/">PEP 412 &ndash; Key-Sharing Dictionary</a></p>
-<p>在这个模式下，多个不同的<code>PyDictObject</code>对象里面的<code>ma_keys</code>指针指向同一个<code>PyDictKeysObject</code>对象。原来的字典里的**<code>entry(hash-key-value)</code>是一个整体，牵一发而动全身**，现在<code>key</code>合并了，也就意味着<code>entry</code>合并了，所以<code>value</code>也被迫合并了，但是我们不能让<code>value</code>合并，因为这种模式下不同的<code>PyDictKeysObject</code>对象的<code>key</code>一样，但是<code>value</code>不一样，没有办法，就只好在<code>entry</code>结构外面添加<code>value</code>数组，代替被迫合并的<code>entry-&gt;value</code>，这个外加的<code>value</code>数组就分别附加到多个不同的<code>PyDictObject</code>对象后面。这个做法分开了<code>key</code>和<code>value</code>，所以取名&quot;splitted&quot;</p>
+<p>在这个模式下，多个不同的<code>PyDictObject</code>对象里面的<code>ma_keys</code>指针指向同一个<code>PyDictKeysObject</code>对象。原来的字典里的<strong><code>entry(hash-key-value)</code>是一个整体，牵一发而动全身</strong>，现在<code>key</code>合并了，也就意味着<code>entry</code>合并了，所以<code>value</code>也被迫合并了，但是我们不能让<code>value</code>合并，因为这种模式下不同的<code>PyDictKeysObject</code>对象的<code>key</code>一样，但是<code>value</code>不一样，没有办法，就只好在<code>entry</code>结构外面添加<code>value</code>数组，代替被迫合并的<code>entry-&gt;value</code>，这个外加的<code>value</code>数组就分别附加到多个不同的<code>PyDictObject</code>对象后面。这个做法分开了<code>key</code>和<code>value</code>，所以取名&quot;splitted&rdquo;</p>
 <blockquote>
 <p>/* If ma_values is NULL, the table is &ldquo;combined&rdquo;: keys and values
 ​       are stored in ma_keys.</p>
@@ -878,7 +878,7 @@ If a table is split (its keys and hashes are shared, its values are not), then t
 </li>
 <li>
 <p>申请新的 PyDictKeysObject 对象</p>
-<p>&ldquo;combined&quot;模式下，需要扩容的部分是<code>PyDictKeysObject</code>对象里面的<code>dk_indices</code>和<code>dk_entries</code>，程序并没有直接扩容这部分，因为**<code>dk_indices</code>和<a href="#dk_entries"><code>dk_entries</code></a>不是指针**，它们占用了<code>PyDictKeysObject</code>这个结构体后面连续的内存区域，所以直接重新申请了新的<code>PyDictKeysObject</code>对象。</p>
+<p>&ldquo;combined&quot;模式下，需要扩容的部分是<code>PyDictKeysObject</code>对象里面的<code>dk_indices</code>和<code>dk_entries</code>，程序并没有直接扩容这部分，因为<strong><code>dk_indices</code>和<a href="#dk_entries"><code>dk_entries</code></a>不是指针</strong>，它们占用了<code>PyDictKeysObject</code>这个结构体后面连续的内存区域，所以直接重新申请了新的<code>PyDictKeysObject</code>对象。</p>
 <p>&ldquo;splitted&quot;模式下，本来还需要额外扩容<code>ma_values</code>，不过因为扩容使字典转换为&quot;combined&quot;模式，所以实际上不需要扩容<code>ma_values</code>，直接申请新的<code>PyDictKeysObject</code>对象，把<code>ma_values</code>转移到<code>dk_entries</code>里面，再把<code>ma_values</code>指向<code>NULL</code>就好。</p>
 <p>好奇心又来了，为什么不把<code>dk_indices</code>和<code>dk_entries</code>设置成指针，指向独立的数组呢？那样不就可以用<code>realloc</code>之类的函数扩容数组了吗？同时也不用重新申请<code>PyDictKeysObject</code>对象，也不用手动复制数组元素了。</p>
 <p>这个问题在网上和源码里都没找到答案，我就自己瞎猜一下吧。假如我现在换用指针，这两个数组在结构体外部申请独立的空间，那么会面临 2 个问题：</p>
@@ -994,10 +994,10 @@ insertdict_clean(PyDictObject *mp, PyObject *key, Py_hash_t hash,
   
   <nav class="pagination-single">
     
-      <span class="previous">&larr; <a href="https://adjwang.github.io/posts/miscellaneous/canarieshidinginstack/" rel="prev">藏在栈里的金丝雀</a></span>
+      <span class="previous">&larr; <a href="http://47.96.165.13/posts/miscellaneous/canarieshidinginstack/" rel="prev">藏在栈里的金丝雀</a></span>
     
     
-      <span class="next"><a href="https://adjwang.github.io/posts/python/pythonnest/" rel="next">Python 括号层数限制(SyntaxError: too many nested parentheses)</a> &rarr;</span>
+      <span class="next"><a href="http://47.96.165.13/posts/python/pythonnest/" rel="next">Python 括号层数限制(SyntaxError: too many nested parentheses)</a> &rarr;</span>
     
   </nav>
 
