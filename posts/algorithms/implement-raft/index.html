@@ -6,7 +6,7 @@
   
   <meta charset="UTF-8">
   <title>
-    Implement Raft | 竹林七咸
+    Implement Raft | 小豆岛熬鹰王
   </title>
 
   
@@ -26,8 +26,8 @@
   <link rel="stylesheet" href="/css/custom.css">
   
   
-  <link href="http://47.96.165.13/index.xml" rel="alternate" type="application/rss+xml" title="竹林七咸" />
-  <link href="http://47.96.165.13/index.xml" rel="feed" type="application/rss+xml" title="竹林七咸" />
+  <link href="http://47.96.165.13/index.xml" rel="alternate" type="application/rss+xml" title="小豆岛熬鹰王" />
+  <link href="http://47.96.165.13/index.xml" rel="feed" type="application/rss+xml" title="小豆岛熬鹰王" />
 
   
   
@@ -48,8 +48,8 @@
   <header role="banner">
     <div class="row gutters">
       <div id="site-title" class="col span_6">
-        <h1><a href="http://47.96.165.13/">竹林七咸</a></h1>
-        <h2>吾乃咸鱼一条，竹林七咸之一。</h2>
+        <h1><a href="http://47.96.165.13/">小豆岛熬鹰王</a></h1>
+        <h2>Start early!</h2>
       </div>
       <div id="social" class="col span_6">
         <ul>
@@ -140,6 +140,8 @@
 <li>
 <p>DO NOT make assumptions on the order or the time an asynchronous function being invoked or a lock being acquired. Even if you are testing your code in LAN.</p>
 <p>When I wrote the first version of my bug &ndash; send AppendEntries request, it was like this:</p>
+</li>
+</ul>
 <pre><code class="language-go">reqAppendEntries := func(rf *Raft, handler func(from int, reply *AppendEntriesReply)) {
     for i := range rf.peers {
         if i == rf.me {
@@ -172,7 +174,7 @@ for !rf.killed() {
     if rf.killed() {
         break
     }
-  
+
     rf.mu.Lock()
     switch rf.character {
     case LEADER:
@@ -210,35 +212,35 @@ for !rf.killed() {
 </li>
 <li>
 <p>other peers receives AppendEntries request both from the real LEADER and the fake LEADER with same term</p>
-</li>
-</ol>
 <p>So the key is to ensure the args passed to sendAppendEntries() holds the states before any callback handler being invoked. I fixed it by making args outside the go func like this:</p>
 <pre><code class="language-go">reqAppendEntries := func(rf *Raft, handler func(from int, reply *AppendEntriesReply)) {
-    for serverIdx := range rf.peers {
-        if serverIdx == rf.me {
-            continue
-        }
-        args := &amp;AppendEntriesArgs{
-            Term:         rf.currentTerm,
-            LeaderId:     rf.me,
-            PrevLogIndex: rf.nextIndex[serverIdx] - 1,
-            PrevLogTerm:  rf.log[rf.nextIndex[serverIdx]-1].Term,
-            Entries:      rf.log[rf.nextIndex[serverIdx]:],
-            LeaderCommit: rf.commitIndex,
-        }
-        log.Printf(LogPrefix(rf)+&quot;append entries send: %v to: %v, nextIndex: %v\n&quot;, args, serverIdx, rf.nextIndex)
-        go func(serverIdx int, args *AppendEntriesArgs) {
-            reply := &amp;AppendEntriesReply{}
-            if rf.sendAppendEntries(serverIdx, args, reply) {
-                handler(serverIdx, reply)
-            }
-        }(serverIdx, args)
-    }
+ for serverIdx := range rf.peers {
+     if serverIdx == rf.me {
+         continue
+     }
+     args := &amp;AppendEntriesArgs{
+         Term:         rf.currentTerm,
+         LeaderId:     rf.me,
+         PrevLogIndex: rf.nextIndex[serverIdx] - 1,
+         PrevLogTerm:  rf.log[rf.nextIndex[serverIdx]-1].Term,
+         Entries:      rf.log[rf.nextIndex[serverIdx]:],
+         LeaderCommit: rf.commitIndex,
+     }
+     log.Printf(LogPrefix(rf)+&quot;append entries send: %v to: %v, nextIndex: %v\n&quot;, args, serverIdx, rf.nextIndex)
+     go func(serverIdx int, args *AppendEntriesArgs) {
+         reply := &amp;AppendEntriesReply{}
+         if rf.sendAppendEntries(serverIdx, args, reply) {
+             handler(serverIdx, reply)
+         }
+     }(serverIdx, args)
+ }
 }
 </code></pre>
 </li>
+</ol>
+<ul>
 <li>
-<p>Don&rsquo;t forget to use ctrl+\ to solve deadlock issue. When I was implementing the InstallSnapshot, I encountered a deadlock problem after I add a lock in Snapshot(). The deadlock cycle is:</p>
+<p>Don&rsquo;t forget to use ctrl+\ to diagnose deadlock issue. When I was implementing the InstallSnapshot, I encountered a deadlock problem after I add a lock in Snapshot(). The deadlock cycle is:</p>
 <ol>
 <li>
 <p>raft.go, ApplyEntries handler: Acquired rf.mu.Lock() in ApplyEntries handler and wait to push ApplyMsg to applyCh when updating commit index. Only after cfg.applierSnap() consumes an entry could carry on here.</p>
