@@ -16,7 +16,7 @@
   <meta name="viewport" content="width=device-width,user-scalable=no,maximum-scale=1,initial-scale=1">
 
   
-  <link rel="canonical" href="http://47.96.165.13/posts/miscellaneous/canarieshidinginstack/"/>
+  <link rel="canonical" href="http://47.96.165.13/adjwang/posts/miscellaneous/canarieshidinginstack/"/>
 
   
   <link rel="stylesheet" href="/css/sanitize.css">
@@ -26,8 +26,8 @@
   <link rel="stylesheet" href="/css/custom.css">
   
   
-  <link href="http://47.96.165.13/index.xml" rel="alternate" type="application/rss+xml" title="小豆岛熬鹰王" />
-  <link href="http://47.96.165.13/index.xml" rel="feed" type="application/rss+xml" title="小豆岛熬鹰王" />
+  <link href="http://47.96.165.13/adjwangindex.xml" rel="alternate" type="application/rss+xml" title="小豆岛熬鹰王" />
+  <link href="http://47.96.165.13/adjwangindex.xml" rel="feed" type="application/rss+xml" title="小豆岛熬鹰王" />
 
   
   
@@ -48,7 +48,7 @@
   <header role="banner">
     <div class="row gutters">
       <div id="site-title" class="col span_6">
-        <h1><a href="http://47.96.165.13/">小豆岛熬鹰王</a></h1>
+        <h1><a href="http://47.96.165.13/adjwang">小豆岛熬鹰王</a></h1>
         <h2>Start early!</h2>
       </div>
       <div id="social" class="col span_6">
@@ -56,7 +56,7 @@
           
           
           <li><a href="https://github.com/AdjWang" target="_blank">GitHub</a></li>
-          <li><a href="http://47.96.165.13/index.xml" type="application/rss+xml" target="_blank">RSS</a></li>
+          <li><a href="http://47.96.165.13/adjwangindex.xml" type="application/rss+xml" target="_blank">RSS</a></li>
         </ul>
       </div>
     </div>
@@ -117,7 +117,9 @@
 </code></pre>
 <p>可以看到， <code>local_var.a</code> 对应 <code>[ebp-C]</code>，<code>local_var.b</code> 对应 <code>[ebp-8]</code>，那么，<code>[ebp-4]</code> 现在是啥？</p>
 <p>没错，就是 &ldquo;canary&rdquo; 。其实确切地说，控制编译器做这种事情的是 <code>/RTC</code> (Run-time error checks) 选项，而通常大家所说的 &ldquo;canary&rdquo; 是 /GS (Buffer Security Check) 选项添加的。对于这件事，<strong>我觉得应该把 &ldquo;canary&rdquo; 看成一种安全防范的思想，不要纠结教条的东西，所以我就在这里认为这东西是 &ldquo;canary&rdquo; 了。</strong></p>
-<p>当然，还有一些事得说清楚，<strong>添加 &ldquo;canary&rdquo; 并不是 RTC 检查的唯一动作，更多细节可以参考</strong> <a href="https://docs.microsoft.com/en-us/cpp/build/reference/rtc-run-time-error-checks?view=msvc-160"><strong>MSDN文档</strong></a> 。另外，RTC 检查是 Debug 模式的默认选项，而在 Release 模式下关闭，而 GS 在两种模式下都会默认开启，这也就解释了某些代码注入程序只能在 Release 模式下跑通的现象。然而，凡事都有例外，我也发现会有一些代码，尽管我没有声明数组，在 Release 模式下仍然会受到类似 RTC 这种保护的影响，这时就要考虑去关闭 GS 选项试试。当然，trade-off 就是引入了更大的安全风险。</p>
+<p>当然，还有一些事得说清楚，<strong>添加 &ldquo;canary&rdquo; 并不是 RTC 检查的唯一动作，更多细节可以参考</strong> 
+
+<a href="https://docs.microsoft.com/en-us/cpp/build/reference/rtc-run-time-error-checks?view=msvc-160" target="_blank"><strong>MSDN文档</strong></a> 。另外，RTC 检查是 Debug 模式的默认选项，而在 Release 模式下关闭，而 GS 在两种模式下都会默认开启，这也就解释了某些代码注入程序只能在 Release 模式下跑通的现象。然而，凡事都有例外，我也发现会有一些代码，尽管我没有声明数组，在 Release 模式下仍然会受到类似 RTC 这种保护的影响，这时就要考虑去关闭 GS 选项试试。当然，trade-off 就是引入了更大的安全风险。</p>
 <h2 id="验证">验证</h2>
 <p>首先，在 <code>__declspec(naked)</code> 声明下，&ldquo;canary&rdquo; 完全没用，手动修改 <code>[ebp-4]</code> 的值，然后运行：</p>
 <pre><code class="language-cpp">__declspec(naked) int __cdecl canariesTestNaked() {
@@ -239,10 +241,10 @@
   
   <nav class="pagination-single">
     
-      <span class="previous">&larr; <a href="http://47.96.165.13/posts/algorithms/implement-raft/" rel="prev">Implement Raft</a></span>
+      <span class="previous">&larr; <a href="http://47.96.165.13/adjwang/posts/algorithms/implement-raft/" rel="prev">Implement Raft</a></span>
     
     
-      <span class="next"><a href="http://47.96.165.13/posts/python/dict/" rel="next">细说 PEP 468: Preserving Keyword Argument Order</a> &rarr;</span>
+      <span class="next"><a href="http://47.96.165.13/adjwang/posts/python/dict/" rel="next">细说 PEP 468: Preserving Keyword Argument Order</a> &rarr;</span>
     
   </nav>
 

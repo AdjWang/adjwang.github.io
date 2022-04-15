@@ -2,12 +2,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on 小豆岛熬鹰王</title>
-    <link>http://47.96.165.13/tags/</link>
+    <link>http://47.96.165.13/adjwang/tags/</link>
     <description>Recent content in Tags on 小豆岛熬鹰王</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     
-	<atom:link href="http://47.96.165.13/tags/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="http://47.96.165.13/adjwang/tags/index.xml" rel="self" type="application/rss+xml" />
     
     
   </channel>

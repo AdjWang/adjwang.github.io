@@ -2,48 +2,48 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Posts on 小豆岛熬鹰王</title>
-    <link>http://47.96.165.13/posts/</link>
+    <link>http://47.96.165.13/adjwang/posts/</link>
     <description>Recent content in Posts on 小豆岛熬鹰王</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 31 Jan 2022 00:25:34 +0800</lastBuildDate>
     
-	<atom:link href="http://47.96.165.13/posts/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="http://47.96.165.13/adjwang/posts/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Implement Raft</title>
-      <link>http://47.96.165.13/posts/algorithms/implement-raft/</link>
+      <link>http://47.96.165.13/adjwang/posts/algorithms/implement-raft/</link>
       <pubDate>Mon, 31 Jan 2022 00:25:34 +0800</pubDate>
       
-      <guid>http://47.96.165.13/posts/algorithms/implement-raft/</guid>
+      <guid>http://47.96.165.13/adjwang/posts/algorithms/implement-raft/</guid>
       <description>6.824 Lab 2: Raft</description>
     </item>
     
     <item>
       <title>藏在栈里的金丝雀</title>
-      <link>http://47.96.165.13/posts/miscellaneous/canarieshidinginstack/</link>
+      <link>http://47.96.165.13/adjwang/posts/miscellaneous/canarieshidinginstack/</link>
       <pubDate>Sun, 25 Apr 2021 22:29:50 +0800</pubDate>
       
-      <guid>http://47.96.165.13/posts/miscellaneous/canarieshidinginstack/</guid>
+      <guid>http://47.96.165.13/adjwang/posts/miscellaneous/canarieshidinginstack/</guid>
       <description>缓冲区溢出检测</description>
     </item>
     
     <item>
       <title>细说 PEP 468: Preserving Keyword Argument Order</title>
-      <link>http://47.96.165.13/posts/python/dict/</link>
+      <link>http://47.96.165.13/adjwang/posts/python/dict/</link>
       <pubDate>Sat, 27 Feb 2021 18:05:51 +0800</pubDate>
       
-      <guid>http://47.96.165.13/posts/python/dict/</guid>
+      <guid>http://47.96.165.13/adjwang/posts/python/dict/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Python 括号层数限制(SyntaxError: too many nested parentheses)</title>
-      <link>http://47.96.165.13/posts/python/pythonnest/</link>
+      <link>http://47.96.165.13/adjwang/posts/python/pythonnest/</link>
       <pubDate>Tue, 12 Jan 2021 18:07:34 +0800</pubDate>
       
-      <guid>http://47.96.165.13/posts/python/pythonnest/</guid>
+      <guid>http://47.96.165.13/adjwang/posts/python/pythonnest/</guid>
       <description></description>
     </item>
     
