@@ -124,7 +124,11 @@
 </li>
 <li>
 <p>what if client write to leader and read from a follower before it catch up commit index to the leader?</p>
-<p>(not sure, maybe only read from leader?)</p>
+<p>Well it depends on your needs.</p>
+<p>If you expect the system to be 
+
+<a href="https://en.wikipedia.org/wiki/Linearizability" target="_blank"><em>linearizable</em></a>, to be short, disallows staled data returnd to client, in which case you can only read from the leader.</p>
+<p>If your app is able to loosen the requirement of data instantaneity, you can balance the client requests to followers to improve the read performance.</p>
 </li>
 <li>
 <p>if a leader blocked and connects back after a new leader being elected, there will be 2 leaders in the cluster.</p>
