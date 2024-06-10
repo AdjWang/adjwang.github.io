@@ -431,7 +431,7 @@ $$
 
 在变换欧拉角前要三思，Quaternion 有两个非常变态的特性：
 
-- 使用某一欧拉角集合转换成 quaternion 再转换成欧拉角，输出结果与构造时的输入可能不一致\cite{quat_conversion_euler}。
+- 使用某一欧拉角集合转换成 quaternion 再转换成欧拉角，输出结果与构造时的输入可能不一致{{< cite name="quat_conversion_euler" >}}。
 
 - 由于 atan 函数值域没有 90° 角，该点无法从 quaternion 转换为欧拉角，俗称“奇点”，在旋转矩阵里也表现为万向节锁(Gimbal Lock)。
 
