@@ -1,0 +1,33 @@
+baseURL = "https://adjwang.github.io/"
+relativeURLs = true
+languageCode = "en-us"
+title = "小豆岛熬鹰王"
+disqusShortname = "AdjWang"
+enableRobotsTXT = true
+theme = "angels-ladder"
+
+[Params]
+subtitle = "Start early!"
+github = "https://github.com/AdjWang"
+showsRSS = true
+profile = "/images/profile.jpg"
+copyright = "Written by AdjWang"
+analytics = "UA-XXXXXXXX-X"
+shareThis = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+utteranc_repo = "AdjWang/adjwang.github.io"
+
+[markup]
+  [markup.highlight]
+    codeFences = false
+  [markup.goldmark.renderer]
+    unsafe= true
+  [markup.goldmark]
+    [markup.goldmark.extensions]
+      [markup.goldmark.extensions.passthrough]
+        enable = true
+        [markup.goldmark.extensions.passthrough.delimiters]
+          block = [['\[', '\]'], ['$$', '$$']]
+          inline = [['\(', '\)']]
+
+[params]
+  math = true
