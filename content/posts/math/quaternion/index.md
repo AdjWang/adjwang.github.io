@@ -7,12 +7,6 @@ table_of_contents: true
 ---
 
 ## Hamiltons Quaternions
-abc
-### test section
-def
-#### test section2
-ghi
-##### test section2
 
 $$
 \begin{equation} \label{eq:quat_basic}
