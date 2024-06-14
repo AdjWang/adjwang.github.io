@@ -16,6 +16,9 @@ analytics = "UA-XXXXXXXX-X"
 shareThis = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 utteranc_repo = "AdjWang/adjwang.github.io"
 
+toc_start_level = 2
+toc_end_level = 4
+
 [markup]
   [markup.highlight]
     codeFences = false
@@ -28,6 +31,7 @@ utteranc_repo = "AdjWang/adjwang.github.io"
         [markup.goldmark.extensions.passthrough.delimiters]
           block = [['\[', '\]'], ['$$', '$$']]
           inline = [['\(', '\)']]
-
-[params]
-  math = true
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 4
+    ordered = false

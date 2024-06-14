@@ -3,9 +3,16 @@ title: "Quaternion"
 summary: "Use glm::quat as example"
 date: 2024-06-09T21:40:03+08:00
 math: true
+table_of_contents: true
 ---
 
 ## Hamiltons Quaternions
+abc
+### test section
+def
+#### test section2
+ghi
+##### test section2
 
 $$
 \begin{equation} \label{eq:quat_basic}
