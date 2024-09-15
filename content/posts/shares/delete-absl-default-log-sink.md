@@ -2,6 +2,7 @@
 title: "\"Delete\" abseil's default log sink"
 summary: ""
 date: 2024-09-15T21:06:00+08:00
+table_of_contents: true
 ---
 
 # "Delete" abseil's default log sink
