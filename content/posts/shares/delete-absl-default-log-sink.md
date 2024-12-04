@@ -5,8 +5,6 @@ date: 2024-09-15T21:06:00+08:00
 table_of_contents: true
 ---
 
-# "Delete" abseil's default log sink
-
 ## Abseil's logging library
 
 I like google's code syntax of logging, it's more clean than spdlog. The log library is available from [glog](https://github.com/google/glog) or [abseil](https://github.com/abseil/abseil-cpp). Abseil also contains a bunch of utilities and remains quite lightweight. (Yes, I'm looking at you, boost). It's so great to have all of them by adding only one dependency.
