@@ -236,3 +236,7 @@ set(raylib_LIBRARY ${<PROJ_NAME>_DEPS_OUTPUT_DIR}/lib/raylib.lib)
 - `warning D9025 : overriding '/MD' with '/MT'`
 
     Similary to the one above, use `-v` to show compile commands and to debug.
+
+- `CMAKE_MSVC_RUNTIME_LIBRARY` seems not working
+
+    Check your CMake version and consider using `-DCMAKE_POLICY_DEFAULT_CMP0091=NEW`. Checkout [CMP0091](https://cmake.org/cmake/help/latest/policy/CMP0091.html) and [here](https://discourse.cmake.org/t/msvc-runtime-library-completely-ignored/10004).
